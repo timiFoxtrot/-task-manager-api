@@ -3,9 +3,14 @@ import express, { Request, Response, NextFunction } from "express";
 import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
+import cors from 'cors';
+import * as dotenv from 'dotenv';
 
-import indexRouter from "./src/routes/index";
-import usersRouter from "./src/routes/users";
+dotenv.config();
+
+import authRouter from "./routes/auth";
+import tasksRouter from "./routes/tasks";
+import connect from "./db/connect";
 
 var app = express();
 
@@ -13,14 +18,15 @@ var app = express();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
 
+app.use(cors())
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/users", authRouter);
+app.use("/tasks", tasksRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -38,4 +44,9 @@ app.use(function (err: HttpError, req: Request, res: Response, next: NextFunctio
   res.render("error");
 });
 
-module.exports = app;
+const port = process.env.PORT || 8081;
+
+app.listen(port, async () => {
+  console.log(`App is running at http://localhost:${port}`);
+  await connect();
+});
